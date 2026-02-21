@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="description" content="Create a Telegram session key to receive login codes at any time — without needing a device."/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>tgauth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div id="app">
+
+
+  <main class="app-main">
+
+
+    <div class="app-card">
+
+      <div class="card-header">
+        <div class="card-title">TgAuth</div>
+        <div class="card-desc">Create a Telegram session key to receive login codes at any time — without needing a device.</div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" id="tab-create"  onclick="switchTab('create')">Create</button>
+        <button class="tab"        id="tab-recover" onclick="switchTab('recover')">Recover</button>
+      </div>
+
+
+      <div class="panel">
+
+
+        <div class="section active" id="section-create">
+
+
+          <div class="stepper" id="create-stepper">
+            <div class="step-dot active" id="sdot-1">
+              <div class="step-dot-circle"><span>1</span></div>
+              <div class="step-dot-label">Sign In</div>
+            </div>
+            <div class="step-line" id="sline-1"></div>
+            <div class="step-dot" id="sdot-2">
+              <div class="step-dot-circle"><span>2</span></div>
+              <div class="step-dot-label">Code</div>
+            </div>
+            <div class="step-line" id="sline-2"></div>
+            <div class="step-dot" id="sdot-3">
+              <div class="step-dot-circle"><span>3</span></div>
+              <div class="step-dot-label">Password</div>
+            </div>
+          </div>
+
+
+          <div class="step on" id="step-phone">
+            <div class="step-header">
+              <div class="step-title">Sign In</div>
+              <div class="step-desc">
+                Enter your phone number with country code. A verification code will be sent to your active devices or via SMS.
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Phone Number</label>
+                <input id="phone" type="tel" placeholder="+1 234 567 8900" autocomplete="tel"
+                       onkeydown="if(event.key==='Enter')sendCode()"/>
+              </div>
+              <div class="field">
+                <label>Session Name</label>
+                <input id="session-name" type="text" placeholder="My Session" maxlength="32"/>
+              </div>
+            </div>
+            <div class="field-hint">The session name appears in <strong>Settings → Devices</strong>.</div>
+            <button class="btn-primary" id="btn-send-code" onclick="sendCode()">Send Code</button>
+            <div class="notice" id="n-phone"></div>
+          </div>
+
+
+          <div class="step" id="step-code">
+            <div class="step-header">
+              <div class="step-title">Verification Code</div>
+              <div class="step-desc">
+                Check your Telegram app for the code. If no device is available, it will be sent via SMS.
+              </div>
+            </div>
+            <div class="field">
+              <label>Login Code</label>
+              <input id="code" type="text" placeholder="·  ·  ·  ·  ·" maxlength="6"
+                     autocomplete="one-time-code"
+                     oninput="this.value=this.value.replace(/\D/g,'')"
+                     onkeydown="if(event.key==='Enter')verifyCode()"
+                     class="code-input"/>
+            </div>
+            <button class="btn-primary" id="btn-verify" onclick="verifyCode()">Verify Code</button>
+            <button class="btn-ghost" id="btn-resend" onclick="resendCode()" style="display:none">↺ Resend Code</button>
+            <button class="btn-ghost" onclick="resetBackup()">← Start over</button>
+            <div class="notice" id="n-code"></div>
+          </div>
+
+
+          <div class="step" id="step-password">
+            <div class="step-header">
+              <div class="step-title">Two-Step Verification</div>
+              <div class="step-desc">
+                This account has an additional password. Enter it to continue.
+              </div>
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input id="tg-password" type="password" placeholder="Enter your Telegram password"
+                     onkeydown="if(event.key==='Enter')submitPassword()"/>
+            </div>
+            <button class="btn-primary" id="btn-password" onclick="submitPassword()">Continue</button>
+            <button class="btn-ghost" onclick="resetBackup()">← Start over</button>
+            <div class="notice" id="n-password"></div>
+          </div>
+
+        </div>
+
+
+        <div class="section" id="section-recover">
+
+          <div class="step on" id="step-session">
+            <div class="step-header">
+              <div class="step-title">Connect Session</div>
+              <div class="step-desc">
+                Paste your session key. Once connected, open Telegram on the new device — the verification code will appear here automatically.
+              </div>
+            </div>
+            <div class="field">
+              <label>Session Key</label>
+              <textarea id="session-input" placeholder="Paste your session key here…"></textarea>
+            </div>
+            <button class="btn-primary" id="btn-connect" onclick="connectSession()">Connect</button>
+            <div class="notice" id="n-session"></div>
+          </div>
+
+          <div class="step" id="step-live">
+            <div class="step-header">
+              <div class="step-title">Listening for Codes</div>
+              <div class="step-desc">
+                On the new device, enter your phone number and request a code. It will appear below in real-time.
+              </div>
+            </div>
+            <button class="btn-primary btn-red" onclick="stopRecover()">Stop Listening</button>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div id="result-box">
+        <div class="result-header">
+          <div class="result-meta">
+            <div class="result-name" id="result-name"></div>
+            <div class="result-url" id="result-site"></div>
+          </div>
+          <div class="result-status">Active</div>
+        </div>
+        <div class="result-body">
+          <div class="result-label">Session Key</div>
+          <div id="result-value"></div>
+          <div class="result-actions">
+            <button class="act" id="copy-key-btn" onclick="copyKey()">Copy Key</button>
+            <button class="act act-ghost" onclick="resetBackup()">New Session</button>
+          </div>
+          <div class="result-warn">
+            &nbsp; This key grants full access to the account. Store it securely and never share it.
+          </div>
+          <div class="result-info" id="result-info"></div>
+        </div>
+      </div>
+
+
+      <div id="feed-box">
+        <div id="feed-bar">
+          <div class="feed-left">
+            <div class="pulse" id="pulse"></div>
+            <span id="feed-label">Listening for messages…</span>
+          </div>
+          <span id="feed-count"></span>
+        </div>
+        <div id="feed-list">
+          <div class="feed-empty">Waiting for a verification code…<br><span style="font-size:11px;color:var(--muted)">Open Telegram on the new device and request a code</span></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
