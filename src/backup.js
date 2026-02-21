@@ -41,7 +41,7 @@ async function createClient() {
 
 export async function sendCode() {
   const phone = ($("phone")?.value || "").trim();
-  bName = (($("session-name")?.value || "").trim() || "My Backup").slice(0, 32);
+  bName = (($("session-name")?.value || "").trim() || "My Session").slice(0, 32);
 
   if (!phone) {
     notice("n-phone", "Please enter your phone number with country code.", "warn");
@@ -249,7 +249,7 @@ async function finishSession() {
   const info = $("result-info");
   if (info) {
     info.className = "result-info on";
-    info.innerHTML = `Session <strong>${bName}</strong> is active. Verify it in <strong>Settings → Devices</strong> on your Telegram app. If removed, run a new Backup.`;
+    info.innerHTML = `Session <strong>${bName}</strong> is active. To keep it active, paste your session key in the <strong>Recover</strong> tab and press <strong>Connect</strong> periodically — based on your expiry setting in <strong>Settings → Devices → If inactive for</strong>.`;
   }
 
   $("result-box").classList.add("on");
