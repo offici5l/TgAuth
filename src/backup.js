@@ -35,7 +35,6 @@ async function createClient() {
     deviceModel:   bName,
     systemVersion: SITE_URL,
     langCode:      "en",
-    layer:         180,
   });
   await bClient.connect();
 }
