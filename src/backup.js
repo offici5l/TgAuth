@@ -24,6 +24,8 @@ export function resetBackup() {
   setLoading("btn-password",  false);
   $("btn-resend").style.display = "none";
   $("result-box").classList.remove("on");
+  const hb = $("health-box");
+  if (hb) { hb.className = ""; hb.innerHTML = ""; }
 }
 
 async function createClient() {
@@ -234,9 +236,41 @@ export async function submitPassword() {
   }
 }
 
+async function checkSessionHealth(client) {
+  const el = $("health-box");
+  if (!el) return;
+
+  try {
+    const res = await client.invoke(new Api.account.GetAuthorizations());
+    const ttlDays = res.authorizationTtlDays;
+    const current = res.authorizations.find(a => a.current);
+    if (!current) { el.className = ""; el.innerHTML = ""; return; }
+
+    let html = `<div class="health-title">Auto sign-out after ${ttlDays} day${ttlDays !== 1 ? "s" : ""} of inactivity</div>` +
+      `<div class="health-detail">If you don't connect via the <strong>Recover</strong> tab within that window, Telegram will sign this session out automatically.</div>`;
+
+    if (ttlDays < 365) {
+      html += `<div class="health-howto">` +
+        `You can raise this limit yourself in Telegram: ` +
+        `<code>Settings → Devices → Terminate old sessions → If inactive for → 1 year</code>. ` +
+        `TgAuth never changes this setting for you.</div>`;
+    }
+
+    el.className = ttlDays <= 30 ? "on health-warn" : "on health-ok";
+    el.innerHTML = html;
+
+  } catch (_) {
+    el.className = "";
+    el.innerHTML = "";
+  } finally {
+    killClient(client);
+  }
+}
+
 async function finishSession() {
   const sessionStr = bClient.session.save();
   const key        = encodeKey(sessionStr, bName);
+  const clientRef  = bClient;
 
   setLoading("btn-verify",   false);
   setLoading("btn-password", false);
@@ -253,5 +287,6 @@ async function finishSession() {
   }
 
   $("result-box").classList.add("on");
+  checkSessionHealth(clientRef);
   bClient = null; bPhone = ""; bPhoneCodeHash = ""; bAttempts = 0;
 }
